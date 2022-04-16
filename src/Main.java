@@ -31,8 +31,6 @@ public class Main {
 
         PDFRenderer pdfRenderer = new PDFRenderer(document);
 
-
-
         int pageNumber;
         // page -> img
 
@@ -75,7 +73,6 @@ public class Main {
             JButton uiButton1 = new JButton("Select file");
             JButton uiButton2 = new JButton("Shrink PDF");
 
-
             // labels
             JLabel label1 = new JLabel();
             label1.setText("No file selected...");
@@ -117,9 +114,6 @@ public class Main {
 
             uiFrame.add(label1);
             uiFrame.add(label2);
-
-
-
 
             // add buttons to frame
             uiFrame.getContentPane().add(quality1);
