@@ -26,12 +26,14 @@ public class Main {
 
         // create images from document pages
         PDDocument document = PDDocument.load(new File(String.valueOf(filePath)));
+
         PDDocument newPdf = new PDDocument();
+
         PDFRenderer pdfRenderer = new PDFRenderer(document);
-        int numOfPages = document.getNumberOfPages();
 
 
-        int pageNumber = 0;
+
+        int pageNumber;
         // page -> img
 
         for (pageNumber = 0; pageNumber < document.getNumberOfPages(); ++pageNumber) {
@@ -47,7 +49,7 @@ public class Main {
 
             PDPage newPage = new PDPage(new PDRectangle(width, height));
 
-            PDPageContentStream contentStream = new PDPageContentStream(newPdf, newPage, true, true);
+            PDPageContentStream contentStream = new PDPageContentStream(newPdf, newPage);
 
 
             contentStream.drawImage(pdImage, 0, 0);
@@ -64,7 +66,7 @@ public class Main {
 
     }
     // ui
-    static class UI {
+    public static class UI {
         public UI() {
             // create new frame instance
             JFrame uiFrame = new JFrame("PDF Shrinker");
@@ -167,7 +169,6 @@ public class Main {
 
                         if (option == JFileChooser.APPROVE_OPTION) {
 
-//                            System.out.println(String.valueOf(chooseFile.getSelectedFile()));
                             label1.setText(String.valueOf(chooseFile.getSelectedFile()));
 
 
@@ -185,12 +186,11 @@ public class Main {
                 try {
                     String quality = buttons.getSelection().getActionCommand();
 
-//                    progressBar.setVisible(true);
-//                    progressBar.setStringPainted(true);
 
                     shrink_pdf(chooseFile.getSelectedFile(), Integer.parseInt(quality));
 
-                    System.out.println("Shrunk");
+//
+                    JOptionPane.showMessageDialog(uiFrame,"Done.","PDF Shrunk",JOptionPane.PLAIN_MESSAGE);
 
 
                 } catch (IOException ex) {
