@@ -1,111 +1,20 @@
-import javax.imageio.ImageIO;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-
-
-import org.apache.pdfbox.io.IOUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
-
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
-
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import java.awt.image.BufferedImage;
 import java.io.File;
-
 import java.io.IOException;
 
 
-
 public class Main {
-
-
-    public static void print_something(String something) {
-        System.out.println(something);
-    }
-    public static <PDXObjectImage> void shrink_pdf(File filePath, int reductionSize) throws IOException {
-
-        String outputFolder = "temp/";
-        File outputFile = new File(outputFolder);
-
-        // create temp folder
-        if (!outputFile.exists()){
-            outputFile.mkdir();
-        }
-
-        // create images from document pages
-        PDDocument document = PDDocument.load(new File(String.valueOf(filePath)));
-        PDFRenderer pdfRenderer = new PDFRenderer(document);
-
-        int pageNumber = 0;
-        // page -> img
-        for (PDPage page : document.getPages()){
-            for (pageNumber = 0; pageNumber < document.getNumberOfPages(); ++pageNumber){
-
-                // render image with selected dpi setting
-                // dpi does not help in size reduction must find a way to reduce image quality
-                BufferedImage img = pdfRenderer.renderImageWithDPI(pageNumber,reductionSize, ImageType.RGB);
-
-                String filename = outputFolder + pageNumber + ".jpeg";
-
-                ImageIO.write(img,"jpeg",new File(filename));
-
-            }
-        }
-        document.close();
-
-
-        PDDocument newPdf = new PDDocument();
-
-
-        File[] pages = outputFile.listFiles();
-
-        if (pages != null) {
-            PDPageContentStream contentStream = null;
-            for (File page : pages) {
-
-                BufferedImage image = ImageIO.read(page);
-
-                float width = image.getWidth();
-                float height = image.getHeight();
-
-
-                PDPage newPage = new PDPage(new PDRectangle(width, height));
-                newPdf.addPage(newPage);
-
-                PDImageXObject img = PDImageXObject.createFromFile(String.valueOf(page), newPdf);
-                contentStream = new PDPageContentStream(newPdf, newPage);
-                contentStream.drawImage(img, 0, 0);
-
-
-                System.out.println("added " + page);
-                IOUtils.closeQuietly(contentStream);
-            }
-
-
-        }
-
-        newPdf.save("Shrunk.pdf");
-        newPdf.close();
-
-        // delete temp files
-        File[] files = outputFile.listFiles();
-        if (files != null){
-            for (File file : files){
-                file.delete();
-            }
-        }
-
-        System.out.println("Deleted");
-
-
-    }
-
 
     // main method
     public static void main(String[] args) {
@@ -113,22 +22,56 @@ public class Main {
         new UI();
 
     }
+    public static void shrink_pdf(File filePath, int reductionSize) throws IOException {
 
-    // convert
+        // create images from document pages
+        PDDocument document = PDDocument.load(new File(String.valueOf(filePath)));
+        PDDocument newPdf = new PDDocument();
+        PDFRenderer pdfRenderer = new PDFRenderer(document);
+        int numOfPages = document.getNumberOfPages();
 
 
+        int pageNumber = 0;
+        // page -> img
+
+        for (pageNumber = 0; pageNumber < document.getNumberOfPages(); ++pageNumber) {
+
+            // render image with selected dpi setting
+            //
+            BufferedImage img = pdfRenderer.renderImageWithDPI(pageNumber, reductionSize, ImageType.RGB);
+
+            PDImageXObject pdImage = JPEGFactory.createFromImage(document, img, 0.1f);
+
+            float width = img.getWidth();
+            float height = img.getHeight();
+
+            PDPage newPage = new PDPage(new PDRectangle(width, height));
+
+            PDPageContentStream contentStream = new PDPageContentStream(newPdf, newPage, true, true);
+
+
+            contentStream.drawImage(pdImage, 0, 0);
+            contentStream.close();
+
+            newPdf.addPage(newPage);
+            System.out.println("added" + pageNumber);
+
+        }
+
+        newPdf.save("Shrunk.pdf");
+        document.close();
+        newPdf.close();
+
+    }
     // ui
-    public static class UI {
-
+    static class UI {
         public UI() {
-
             // create new frame instance
             JFrame uiFrame = new JFrame("PDF Shrinker");
             uiFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             // create buttons
             JButton uiButton1 = new JButton("Select file");
             JButton uiButton2 = new JButton("Shrink PDF");
-
 
 
             // labels
@@ -173,6 +116,9 @@ public class Main {
             uiFrame.add(label1);
             uiFrame.add(label2);
 
+
+
+
             // add buttons to frame
             uiFrame.getContentPane().add(quality1);
             uiFrame.getContentPane().add(quality2);
@@ -180,6 +126,13 @@ public class Main {
 
             // select default quality
             quality2.setSelected(true);
+
+            // progress bar
+//            JProgressBar progressBar = new JProgressBar();
+//            progressBar.setValue(0);
+//            progressBar.setVisible(false);
+//            progressBar.setBounds(200, 300, 200, 30);
+//            uiFrame.add(progressBar);
 
             // frame configs
             uiFrame.setSize(600, 400);
@@ -214,7 +167,7 @@ public class Main {
 
                         if (option == JFileChooser.APPROVE_OPTION) {
 
-                            print_something(String.valueOf(chooseFile.getSelectedFile()));
+//                            System.out.println(String.valueOf(chooseFile.getSelectedFile()));
                             label1.setText(String.valueOf(chooseFile.getSelectedFile()));
 
 
@@ -232,21 +185,21 @@ public class Main {
                 try {
                     String quality = buttons.getSelection().getActionCommand();
 
+//                    progressBar.setVisible(true);
+//                    progressBar.setStringPainted(true);
+
                     shrink_pdf(chooseFile.getSelectedFile(), Integer.parseInt(quality));
+
                     System.out.println("Shrunk");
 
 
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
-
-
             });
         }
-
-
-
     }
+
 }
 
 
